@@ -1,4 +1,27 @@
-
+- [Main Structure of a Typical Game](#Main-Structure-of-a-Typical-Game)
+  - [Our Main Loop](#Our-Main-Loop)
+  - [Variant Frame Length](#Variant-Frame-Length)
+  - [Fixed Frame Length](#Fixed-Frame-Length)
+- [`OpenGL` Basis](#OpenGL-Basis)
+  - [`OpenGL` Overview](#OpenGL-Overview)
+    - [`OpenGL` Rendering Pipeline](#OpenGL-Rendering-Pipeline)
+      - [Programmable Pipeline](#Programmable-Pipeline)
+      - [Fixed Functional Pipeline](#Fixed-Functional-Pipeline)
+  - [`OpenGL` Drawing Routines](#OpenGL-Drawing-Routines)
+    - [`OpenGL` Primitives](#OpenGL-Primitives)
+      - [Creating a Primitive](#Creating-a-Primitive)
+      - [Supported Primitives](#Supported-Primitives)
+    - [Render Primitives from Array Data](#Render-Primitives-from-Array-Data)
+  - [Viewport Transform](#Viewport-Transform)
+    - [Homogeneous Coordinate](#Homogeneous-Coordinate)
+    - [Matrix Transform](#Matrix-Transform)
+      - [Translate](#Translate)
+      - [Rotate](#Rotate)
+      - [Scale](#Scale)
+    - [Matrix Reset/Save/Load](#Matrix-ResetSaveLoad)
+    - [Manual Operations](#Manual-Operations)
+      - [Multiplying Matrix](#Multiplying-Matrix)
+      - [Get Current Matrix](#Get-Current-Matrix)
 
 # Main Structure of a Typical Game
 ## Our Main Loop
@@ -146,9 +169,40 @@ glEnd();
 ![primitives](primitives.png)
 
 ### Render Primitives from Array Data
+`glBegin` and `glEnd` can be very slow.
+This drawing routine is removed from `OpenGL` version 2.0 or above.
+One can store vertex attributes in arrays and let `OpenGL` copy them to the inner memory.
+There are 4 steps:
+1. Call
+   ```c++
+   glEnableClineState(GL_VERTEX_ARRAY);
+   ```
+2. Use the command
+   ```c++
+   void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
+   ```
+   - `size` is the number of coordinates per vertex
+   - `type` indicates the type of data, initially `GL_FLOAT`
+   - `stride` specifies the byte offset between consecutive vertices
+   - `pointer` is the pointer to the data array
+3. Draw the elements by
+   ```c++
+   void glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+   ```
+   - `mode` specifies what kind of primitives are to render
+   - `count` specifies the number of elements to be rendered
+   - `indices` is the pointer to the array containing indices which specifies the drawing order of vertices.
+   
+   Note that by duplicating the index in `indices`, one may only need to store shared vertices in `pointer` once.
+4. Call
+   ```c++
+   glDisableClineState(GL_VERTEX_ARRAY);
+   ```
 
 ## Viewport Transform
 ![coordinates](coordinates.png)
+![RHS](RHS.png)
+
 Screen space is limited.
 `OpenGL` can only render things whose screen coordinates are located in $[-1, 1]$ in both $x$ and $y$ axises.
 
@@ -164,7 +218,7 @@ General process of viewport transform:
 Transforms in step 1 and 2 merge to be model-view transform since their orders are user-defined.
 
 `OpenGL` has three matrix modes `GL_MODELVIEW`, `GL_PROJECTION` and `GL_TEXTURE`.
-Use 
+Use
 ```c++
 void glMatrixMode(GLenum mode);
 ``` 
@@ -215,8 +269,7 @@ $$
     z + \Delta z\\
     1
     \end{array}
-\right)
-=
+\right) =
 \left(
     \begin{array}{cc}
     1 & 0 & 0 & \Delta x\\
